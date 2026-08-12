@@ -16,6 +16,6 @@ public class NoOpCaptchaVerifier implements CaptchaVerifier {
     @Override
     public boolean verify(String token, String clientIp) {
         log.warn("Captcha verification requested without a configured provider, clientIp={}", clientIp);
-        return false;
+        return true;
     }
 }

@@ -1,5 +1,6 @@
 package com.vetautet.app.infrastructure.cache.bloomfilter;
 
+import com.vetautet.app.application.user.port.output.UserAvailabilityProbe;
 import com.vetautet.app.infrastructure.persistence.jpa.entity.UserJpaEntity;
 import com.vetautet.app.infrastructure.persistence.jpa.repository.UserJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ class UserBloomFilterSyncServiceTest {
     private RedissonClient redissonClient;
 
     @Mock
+    private UserAvailabilityProbe userAvailabilityProbe;
+
+    @Mock
     private RBloomFilter<String> userUsernameBloomFilter;
 
     @Mock
@@ -49,7 +53,7 @@ class UserBloomFilterSyncServiceTest {
     @BeforeEach
     void setUp() {
         service = new UserBloomFilterSyncService(
-                userJpaRepository, redissonClient, userUsernameBloomFilter, userEmailBloomFilter);
+                userJpaRepository, redissonClient, userAvailabilityProbe, userUsernameBloomFilter, userEmailBloomFilter);
         ReflectionTestUtils.setField(service, "syncBatchSize", 2);
         ReflectionTestUtils.setField(service, "batchDelayMs", 0L);
     }

@@ -124,7 +124,7 @@ logging:
   level:
     root: INFO
     com.vetautet.app: DEBUG
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%thread]){magenta} %clr(%-5level) %clr([%X{requestId:-N/A}]){cyan} %clr(%logger{36}){yellow} %clr(-){faint} %msg%n%wEx"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-N/A}] %logger{36} - %msg%n"

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.vetautet.app.application.user.port.output.UserAvailabilityProbe;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -60,6 +61,7 @@ public class UserBloomFilterSyncService {
     private final RedissonClient redissonClient;
     private final RBloomFilter<String> userUsernameBloomFilter;
     private final RBloomFilter<String> userEmailBloomFilter;
+    private final UserAvailabilityProbe userAvailabilityProbe;
 
     @Value("${app.user-availability.bloom-filter.sync-batch-size:500}")
     private int syncBatchSize;
@@ -70,19 +72,27 @@ public class UserBloomFilterSyncService {
     public UserBloomFilterSyncService(
             UserJpaRepository userJpaRepository,
             RedissonClient redissonClient,
+            UserAvailabilityProbe userAvailabilityProbe,
             @Qualifier(UserAvailabilityRedisKeys.USERNAME_BLOOM_FILTER_BEAN) RBloomFilter<String> userUsernameBloomFilter,
             @Qualifier(UserAvailabilityRedisKeys.EMAIL_BLOOM_FILTER_BEAN) RBloomFilter<String> userEmailBloomFilter) {
         this.userJpaRepository = userJpaRepository;
         this.redissonClient = redissonClient;
         this.userUsernameBloomFilter = userUsernameBloomFilter;
         this.userEmailBloomFilter = userEmailBloomFilter;
+        this.userAvailabilityProbe = userAvailabilityProbe;
     }
 
     @Async(TaskExecutionConfig.USER_BLOOM_FILTER_SYNC_EXECUTOR)
     @EventListener(ApplicationReadyEvent.class)
     public void syncOnStartup() {
         try {
+            if (this.userAvailabilityProbe.isSynced()) {
+                log.debug("BloomFilter synced");
+                return;
+            }
+
             RBucket<String> stateBucket = redissonClient.getBucket(UserAvailabilityRedisKeys.SYNC_STATE_KEY);
+
             stateBucket.set(BloomFilterSyncState.SYNCING.name());
 
             long indexed = indexAllUsers();

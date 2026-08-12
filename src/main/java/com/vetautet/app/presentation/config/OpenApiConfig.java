@@ -38,7 +38,13 @@ public class OpenApiConfig {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("JWT token for authentication")))
+                                .description("JWT token for authentication"))
+                        .addSecuritySchemes("X-Captcha-Token", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY) // Sửa từ HTTP thành APIKEY
+                                .in(SecurityScheme.In.HEADER)     // Chỉ định vị trí nằm ở Header
+                                .name("x-captcha-token")          // Tên header thực tế sẽ gửi đi
+                                .description("Nhập Captcha token được sinh ra từ phía Front-end"))
+                )
                 /*
                 .addSecurityItem(new SecurityRequirement().addList("bearer-jwt"))*/;
     }
