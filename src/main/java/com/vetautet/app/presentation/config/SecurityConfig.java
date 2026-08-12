@@ -66,7 +66,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/register/activate",
                                 "/api/v1/auth/verify-otp-login",
                                 "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password")
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/users/availability")
                         .permitAll()
 
                         // Swagger/OpenAPI documentation - public access

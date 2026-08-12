@@ -81,6 +81,18 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean existsByUsernameIgnoreCase(String username) {
+        return jpaRepository.existsByUsernameIgnoreCase(username);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByEmailIgnoreCase(String email) {
+        return jpaRepository.existsByEmailIgnoreCase(email);
+    }
+
+    @Override
     public void delete(UserId userId) {
         jpaRepository.deleteById(userId.getValue());
     }

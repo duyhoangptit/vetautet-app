@@ -52,9 +52,13 @@ spring:
     connection-fetch: lazy
     hikari:
       auto-commit: false
+      # Số lượng kết nối tối thiểu luôn duy trì mở
       minimum-idle: 5
+      # Số lượng kết nối tối đa trong pool (Tính theo công thức trên)
       maximum-pool-size: 20
+      # Thời gian tối đa chờ để mượn 1 kết nối từ pool trước khi báo lỗi (30 giây)
       connection-timeout: 30000       # 30s
+      # Thời gian tối đa một kết nối được phép rảnh trước khi bị giải phóng
       idle-timeout: 600000            # 10 minutes
       max-lifetime: 1800000           # 30 minutes
       pool-name: HikariPool-vetautet
@@ -120,7 +124,7 @@ logging:
   level:
     root: INFO
     com.vetautet.app: DEBUG
-    org.springframework.security: INFO
+    org.springframework.security: DEBUG
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%thread]){magenta} %clr(%-5level) %clr([%X{requestId:-N/A}]){cyan} %clr(%logger{36}){yellow} %clr(-){faint} %msg%n%wEx"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-N/A}] %logger{36} - %msg%n"
@@ -199,6 +203,20 @@ app:
         hard-limit-per-hour: 20
         challenge-ttl-minutes: 30
         block-ttl-minutes: 120
+      availability:
+        soft-limit-per-minute: 20
+        hard-limit-per-hour: 200
+        challenge-ttl-minutes: 15
+        block-ttl-minutes: 60
+  user-availability:
+    bloom-filter:
+      expected-insertions: 500000
+      false-positive-probability: 0.01
+      sync-batch-size: 500
+      # delay (ms) after each batch during the startup sync, so a large
+      # users table doesn't monopolize the DB pool / Redis while syncing;
+      # set to 0 to disable throttling
+      batch-delay-ms: 5
 
 #  email-urgent-queue
 #  email-transactional-queue

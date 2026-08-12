@@ -26,6 +26,21 @@ public interface UserRepository {
 
     boolean existsByEmail(Email email);
 
+    /**
+     * Case-insensitive username existence check. Takes a raw, already
+     * normalized (trim + lowercase) string rather than a value object
+     * because callers (e.g. the availability check) must never throw for
+     * malformed/partial input - format validation happens elsewhere.
+     */
+    boolean existsByUsernameIgnoreCase(String username);
+
+    /**
+     * Case-insensitive email existence check. Takes a raw string for the
+     * same reason as {@link #existsByUsernameIgnoreCase(String)} - unlike
+     * {@link #existsByEmail(Email)}, this must not throw on malformed input.
+     */
+    boolean existsByEmailIgnoreCase(String email);
+
     void delete(UserId userId);
 
     boolean existsById(UserId userId);
