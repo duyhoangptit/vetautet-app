@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Grep",
+      "Glob",
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(mypy*)"
+    ],
+    "deny": [
+      "Bash(kubectl*)",
+      "Bash(helm*)",
+      "Bash(terraform apply*)",
+      "Bash(terraform destroy*)",
+      "Bash(docker push*)",
+      "Bash(aws*)",
+      "Bash(gcloud*)",
+      "Bash(az*)"
+    ]
+  }
+}

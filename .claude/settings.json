@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(python -m pytest *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(mypy *)",
+      "Bash(uv run pytest *)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run mypy *)"
+    ],
+    "ask": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(pip install *)",
+      "Bash(uv add *)",
+      "Bash(docker *)",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./credentials/**)",
+      "Read(./config/credentials.*)",
+      "Read(./**/*secret*)",
+      "Read(./**/*password*)",
+      "Read(./**/*token*)",
+      "Bash(kubectl *)",
+      "Bash(helm *)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)",
+      "Bash(aws *)",
+      "Bash(gcloud *)",
+      "Bash(az *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(rsync *)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": false,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": [
+        "~/.aws/credentials",
+        "~/.ssh",
+        "~/.kube/config"
+      ],
+      "denyWrite": [
+        "/etc",
+        "/usr/local/bin",
+        "/usr/bin"
+      ]
+    }
+  },
+  "respectGitignore": true,
+  "autoCompactEnabled": true,
+  "skillListingBudgetFraction": 0.02,
+  "skillListingMaxDescChars": 2048,
+  "showThinkingSummaries": false,
+  "spinnerTipsEnabled": false,
+  "verbose": false,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  }
+}

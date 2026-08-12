@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn -o dependency:tree -Dincludes=org.mockito)",
+      "Bash(mvn -o dependency:tree -Dincludes=org.assertj)",
+      "Bash(mvn -o -q compile)",
+      "Bash(mvn -o compile)",
+      "Bash(mvn -o test -Dtest=CheckUserAvailabilityUseCaseImplTest,RedissonUserAvailabilityProbeAdapterTest,UserBloomFilterSyncServiceTest,UserAvailabilityControllerTest,UserRepositoryAdapterExistsByIgnoreCaseTest -DfailIfNoTests=true)",
+      "Bash(mvn -o test)",
+      "Bash(git stash *)",
+      "Bash(mvn -o test -Dtest=VetautetApplicationTests)",
+      "Read(//Users/tigerpro/.m2/**)",
+      "Bash(mkdir -p /tmp/rcheck)",
+      "Read(//tmp/**)",
+      "Bash(unzip -o -q /Users/tigerpro/.m2/repository/org/redisson/redisson/4.4.0/redisson-4.4.0.jar org/redisson/api/RBatch.class org/redisson/api/RBloomFilterAsync.class org/redisson/api/RBloomFilter.class)",
+      "Bash(javap RBatch.class)",
+      "Bash(javap RBloomFilterAsync.class)",
+      "Bash(javap RBloomFilter.class)",
+      "Bash(javap org/redisson/api/RBatch.class)",
+      "Bash(javap org/redisson/api/RBloomFilterAsync.class)",
+      "Bash(javap org/redisson/api/RBloomFilter.class)",
+      "Bash(mvn -o test -Dtest='!VetautetApplicationTests')"
+    ]
+  }
+}
