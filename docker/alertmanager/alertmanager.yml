@@ -1,0 +1,26 @@
+global:
+  resolve_timeout: 5m
+
+inhibit_rules:
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["alertname", "dev", "instance"]
+
+route:
+  receiver: "telegram"
+  group_wait: 15s
+  group_interval: 1m
+  repeat_interval: 2m
+
+receivers:
+  - name: "telegram"
+    telegram_configs:
+      - bot_token: 'bot_token
+        api_url: 'https://api.telegram.org'
+        chat_id: 'chat_id'
+        message: '{{ template "telegram.default.message" . }}''
+
+templates:
+  - '/etc/alertmanager/templates/telegram.tmpl'

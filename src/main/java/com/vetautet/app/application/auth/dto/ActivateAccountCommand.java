@@ -1,0 +1,14 @@
+package com.vetautet.app.application.auth.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+@Builder
+public class ActivateAccountCommand {
+    private String activationToken;
+    private UUID otpSessionId;
+    private String otpCode;
+}

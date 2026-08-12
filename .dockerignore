@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.mvn/wrapper/maven-wrapper.jar
+target
+logs
+grafana-storage
+docker
+docs
+benchmark
+environment
+.env
+.env.*
+compose.yaml
+HELP.md

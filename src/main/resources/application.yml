@@ -1,0 +1,222 @@
+# Application Configuration for Clean Architecture
+spring:
+  # Use virtual threads for improved concurrency and scalability
+  # Tomcat default 200 thread và 10 connect
+  threads:
+    virtual:
+      enabled: true
+  application:
+    name: ticket-app
+  config:
+    import: optional:file:../../../dev.properties
+  kafka:
+    bootstrap-servers: ${APP_KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Do OutboxEvent đang có Payload là JSON, nên dùng StringSerializer để serialize payload sang String trước khi gửi lên Kafka.
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # “Auto ack” thường là khái niệm phía consumer (enable.auto.commit).
+      # Với producer thì mình recommend không để mơ hồ theo default, mà set explicit acks=all.
+      acks: all
+      batch-size: ${APP_KAFKA_PRODUCER_BATCH_SIZE:32768}
+      retries: ${APP_KAFKA_PRODUCER_RETRIES:10}
+      properties:
+        linger.ms: ${APP_KAFKA_PRODUCER_LINGER_MS:20}
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 30000
+        request.timeout.ms: 10000
+        retry.backoff.ms: 1000
+    # Khi làm Kafka consumer sau này, nếu cần xử lý idempotent/ghi DB thì nên tắt auto commit và commit offset sau khi xử lý thành công.
+    # Consumer
+
+  # Cache
+  cache:
+    redis:
+      default-ttl: 3600 # 1 hour
+      caches:
+        otp: 300 # 5 minutes
+        portal-role-endpoints: 300 # 5 minutes
+        user-session: 1800 # 30 minutes
+        train-schedule: 14400 # 4h
+        station: 86400 # 24h
+
+  # Database Configuration
+  datasource:
+    url: ${APP_DB_URL}
+    username: ${APP_DB_USERNAME}
+    password: ${APP_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    # Trước đây, nếu bạn dùng @Transactional, Spring sẽ lấy (borrow) Connection từ pool ngay khi transaction bắt đầu, dù trong transaction đó có thực sự truy cập database hay không.
+    # Với connection-fetch: lazy, Spring sẽ trì hoãn việc lấy Connection cho đến khi câu lệnh JDBC/JPA đầu tiên được thực thi. Spring Boot thực hiện điều này bằng cách bọc DataSource trong LazyConnectionDataSourceProxy.
+    connection-fetch: lazy
+    hikari:
+      auto-commit: false
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000       # 30s
+      idle-timeout: 600000            # 10 minutes
+      max-lifetime: 1800000           # 30 minutes
+      pool-name: HikariPool-vetautet
+
+  # JPA/Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Liquibase Configuration
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: public
+
+  # i18n Configuration
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+
+  # Redis Configuration
+  data:
+    redis:
+      host: ${APP_REDIS_HOST}
+      port: ${APP_REDIS_PORT}
+      password: ${APP_REDIS_PASSWORD:}
+      timeout: ${APP_REDIS_TIMEOUT_MS:2000}
+      connect-timeout: ${APP_REDIS_CONNECT_TIMEOUT_MS:2000}
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+    # Pagination Configuration
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 50
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /
+  tomcat:
+    threads:
+      max: 100
+      min-spare: 10
+      max-queue-capacity: 10000
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.vetautet.app: DEBUG
+    org.springframework.security: INFO
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%thread]){magenta} %clr(%-5level) %clr([%X{requestId:-N/A}]){cyan} %clr(%logger{36}){yellow} %clr(-){faint} %msg%n%wEx"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-N/A}] %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# App Config for Logging
+app:
+  # Outbox Dispatch Job Configuration
+  outbox:
+    dispatch:
+      fixed-delay-ms: 1000 # delay (ms) between end of one batch and start of next
+      batch-size: 100
+      max-retries: 5 # moves event to DLQ after this many failures
+      retry-backoff-seconds: 60 # wait between retry attempts
+    circuit-breaker:
+      failure-threshold: 5 # consecutive all-failed batches before opening
+      cooldown-ms: 60000 # ms to wait in OPEN state before probing
+  auth:
+    frontend-base-url: ${APP_AUTH_FRONTEND_BASE_URL:http://localhost:3000}
+    link-expiration-minutes: 15
+    otp-expiration-minutes: 5
+    otp-max-attempts: 5
+    login-max-failed-attempts: 5
+    login-lockout-minutes: 30
+  logging:
+    path: logs
+    execution:
+      slow-threshold-ms: ${APP_LOGGING_EXECUTION_SLOW_THRESHOLD_MS:1000}
+    json:
+      file:
+        name: logs/application.json
+      event:
+        dataset: ${spring.application.name}.application
+    rolling:
+      max-file-size: 50MB
+      max-history: 30
+      total-size-cap: 5GB
+    async:
+      queue-size: 8192
+      never-block: false
+  kafka:
+    outbox:
+      topic: ${APP_KAFKA_OUTBOX_TOPIC:vetautet.outbox.events}
+      notification-email-topic: ${APP_KAFKA_OUTBOX_NOTIFICATION_EMAIL_TOPIC:notification.email.requested.v1}
+      send-timeout: ${APP_KAFKA_OUTBOX_SEND_TIMEOUT:10s}
+  rate-limit:
+    scopes:
+      register:
+        soft-limit-per-minute: 5
+        hard-limit-per-hour: 20
+        challenge-ttl-minutes: 30
+        block-ttl-minutes: 120
+      registerActivate:
+        soft-limit-per-minute: 10
+        hard-limit-per-hour: 30
+        challenge-ttl-minutes: 15
+        block-ttl-minutes: 60
+      forgotPassword:
+        soft-limit-per-minute: 5
+        hard-limit-per-hour: 20
+        challenge-ttl-minutes: 30
+        block-ttl-minutes: 120
+      resetPassword:
+        soft-limit-per-minute: 5
+        hard-limit-per-hour: 20
+        challenge-ttl-minutes: 30
+        block-ttl-minutes: 120
+
+#  email-urgent-queue
+#  email-transactional-queue
+#  email-bulk-queue
+#  email-retry-queue
+#  email-dlq
+
+# Idempotency Configuration
+idempotency:
+  lock:
+    wait-time-ms: 100
+    lease-time-ms: 5000
+ 
+# Resilience4j Circuit Breaker Configuration
+#resilience4j.circuitbreaker:
+#  instances:
+#    redisService:
+#      registerHealthIndicator: true
+#      slidingWindowSize: 10
+#      failureRateThreshold: 50 # Mở mạch nếu 50% request thất bại
+#      waitDurationInOpenState: 5000ms # Chờ 5s trước khi thử lại
