@@ -4,7 +4,7 @@ services:
     build: .
     container_name: vetautet-app
     ports:
-      - "8080:8081"
+      - "8080:8080"
     environment:
       - APP_DB_URL=jdbc:postgresql://postgres:5432/vetautet_db
       - APP_DB_USERNAME=tigerpro
@@ -25,6 +25,32 @@ services:
       redis:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+    networks:
+      - vetautet-network
+    restart: unless-stopped
+
+  # ─── Application ────────────────────────────────────────────────────────────
+  report-job:
+    build: /Users/tigerpro/Documents/SA/core-banking-10000tps/system-report-job
+    container_name: report-job-app
+    ports:
+      - "8888:8080"
+    environment:
+      - APP_DB_URL=jdbc:postgresql://postgres:5432/db_system_report_job
+      - APP_DB_USERNAME=tigerpro
+      - APP_DB_PASSWORD=secret
+#      - APP_REDIS_HOST=redis
+#      - APP_REDIS_PORT=6379
+#      - APP_REDIS_PASSWORD=
+#      - APP_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#      - APP_KAFKA_OUTBOX_TOPIC=vetautet.outbox.events
+#      - APP_KAFKA_PRODUCER_BATCH_SIZE=32768
+#      - APP_KAFKA_PRODUCER_LINGER_MS=20
+    volumes:
+      - job-logs:/app/logs
+    depends_on:
+      postgres:
         condition: service_healthy
     networks:
       - vetautet-network
@@ -285,6 +311,7 @@ services:
       - ./docker/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
       - ./docker/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - app-logs:/logs:ro
+      - job-logs:/report-job-logs:ro
       - logstash-data:/usr/share/logstash/data
     depends_on:
       elasticsearch:
@@ -319,6 +346,7 @@ volumes:
   elasticsearch-data:
   logstash-data:
   app-logs:
+  job-logs:
   alertmanager_config:
   alertmanager_data:
 

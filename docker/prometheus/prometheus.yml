@@ -23,6 +23,15 @@ scrape_configs:
         target_label: instance
         replacement: "vetautet-app"
 
+  - job_name: "report-job"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["report-job:8080"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "report-job"
+
   - job_name: "postgres-exporter"
     static_configs:
       - targets: ["postgres-exporter:9187"]

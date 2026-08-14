@@ -7,6 +7,7 @@ import com.vetautet.app.domain.user.repository.UserRepository;
 import com.vetautet.app.infrastructure.persistence.jpa.entity.UserJpaEntity;
 import com.vetautet.app.infrastructure.persistence.jpa.repository.UserJpaRepository;
 import com.vetautet.app.infrastructure.persistence.mapper.UserEntityMapper;
+import com.vetautet.app.shared.common.util.PageableSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -63,14 +64,14 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     @Transactional(readOnly = true)
     public Page<User> findAll(Pageable pageable) {
-        return jpaRepository.findAll(pageable)
+        return jpaRepository.findAll(PageableSanitizer.capped(pageable))
                 .map(mapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<User> searchByKeyword(String keyword, Pageable pageable) {
-        return jpaRepository.searchUsers(keyword, pageable)
+        return jpaRepository.searchUsers(keyword, PageableSanitizer.capped(pageable))
                 .map(mapper::toDomain);
     }
 

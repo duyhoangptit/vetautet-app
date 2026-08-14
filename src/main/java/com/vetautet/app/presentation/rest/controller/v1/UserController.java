@@ -45,6 +45,15 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearer-jwt")
 public class UserController {
 
+    /**
+     * Hard upper bound on client-supplied page size. Without this, a caller
+     * can request an arbitrarily large {@code size} and force the query to
+     * load the entire table in one page (unbounded resource consumption /
+     * OWASP API4:2023). Values above this are silently clamped rather than
+     * rejected, matching common pagination API conventions (e.g. GitHub).
+     */
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final CreateUserUseCase createUserUseCase;
     private final UpdateUserUseCase updateUserUseCase;
     private final GetUserUseCase getUserUseCase;
@@ -113,14 +122,15 @@ public class UserController {
     @Operation(summary = "List all users", description = "Retrieves a paginated list of all users")
     public ResponseEntity<BaseResponse<PageResponse<UserResponse>>> listUsers(
             @Parameter(description = "Page number (0-indexed)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Page size (capped at " + MAX_PAGE_SIZE + ")") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdDate") String sortBy,
             @Parameter(description = "Sort direction") @RequestParam(defaultValue = "DESC") String sortDir,
             HttpServletRequest httpRequest) {
-        log.info("Fetching users - page: {}, size: {}, sortBy: {}, sortDir: {}", page, size, sortBy, sortDir);
+        int safeSize = Math.min(size, MAX_PAGE_SIZE);
+        log.info("Fetching users - page: {}, size: {}, sortBy: {}, sortDir: {}", page, safeSize, sortBy, sortDir);
 
         Sort.Direction direction = Sort.Direction.fromString(sortDir);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Pageable pageable = PageRequest.of(page, safeSize, Sort.by(direction, sortBy));
 
         Page<UserDto> userPage = getUserUseCase.findAll(pageable);
         PageResponse<UserResponse> response = mapper.toPageResponse(userPage);
@@ -139,11 +149,12 @@ public class UserController {
     public ResponseEntity<BaseResponse<PageResponse<UserResponse>>> searchUsers(
             @Parameter(description = "Search keyword") @RequestParam String keyword,
             @Parameter(description = "Page number (0-indexed)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Page size (capped at " + MAX_PAGE_SIZE + ")") @RequestParam(defaultValue = "20") int size,
             HttpServletRequest httpRequest) {
+        int safeSize = Math.min(size, MAX_PAGE_SIZE);
         log.info("Searching users with keyword: {}", keyword);
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, safeSize);
         Page<UserDto> userPage = getUserUseCase.searchByKeyword(keyword, pageable);
         PageResponse<UserResponse> response = mapper.toPageResponse(userPage);
         BaseResponse<PageResponse<UserResponse>> baseResponse = BaseResponse.success(

@@ -3,6 +3,7 @@ package com.vetautet.app.infrastructure.ratelimit;
 import java.lang.reflect.Method;
 import java.time.Duration;
 
+import com.vetautet.app.presentation.config.ratelimit.RateLimitProperties;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RateLimitAspect {
 
     private final RedissonClient redissonClient;
+    private final RateLimitProperties properties;
 
     private final ExpressionParser expressionParser = new SpelExpressionParser();
     private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
@@ -47,6 +49,13 @@ public class RateLimitAspect {
         String operation = resolveOperation(method, rateLimited);
         String key = resolveKey(method, joinPoint.getArgs(), rateLimited.key());
         String limiterKey = "ratelimit:" + operation + ":" + key;
+
+        if (!properties.isEnabled()) {
+            // e.g. app.rate-limit.enabled=false under the pentest profile, so
+            // security testing tooling isn't throttled or IP-blocked.
+            log.debug("Rate-limit disabled (app.rate-limit.enabled=false), allowing method={}", method);
+            return true;
+        }
 
         boolean withinLimit;
         try {

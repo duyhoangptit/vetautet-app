@@ -18,6 +18,13 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "app.rate-limit")
 public class RateLimitProperties {
 
+    /**
+     * Master on/off switch for the whole rate-limit module. Set to
+     * {@code false} (e.g. via the {@code pentest} profile) so security
+     * testing/pentest tooling isn't throttled or IP-blocked.
+     */
+    private boolean enabled = true;
+
     private Map<String, RateLimitSpec> scopes = new HashMap<>();
 
     @Data

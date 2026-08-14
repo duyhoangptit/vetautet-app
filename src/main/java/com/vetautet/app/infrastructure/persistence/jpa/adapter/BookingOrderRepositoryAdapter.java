@@ -20,6 +20,7 @@ import com.vetautet.app.infrastructure.persistence.jpa.repository.BookingOrderIt
 import com.vetautet.app.infrastructure.persistence.jpa.repository.BookingOrderJpaRepository;
 import com.vetautet.app.infrastructure.persistence.mapper.BookingOrderEntityMapper;
 import com.vetautet.app.infrastructure.persistence.mapper.BookingOrderItemEntityMapper;
+import com.vetautet.app.shared.common.util.PageableSanitizer;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,14 +64,14 @@ public class BookingOrderRepositoryAdapter implements BookingOrderRepository {
     @Override
     @Transactional(readOnly = true)
     public Page<BookingOrder> findByUserId(UUID userId, Pageable pageable) {
-        return bookingOrderJpaRepository.findByUserId(userId, pageable)
+        return bookingOrderJpaRepository.findByUserId(userId, PageableSanitizer.capped(pageable))
                 .map(bookingOrderEntityMapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BookingOrder> findByUserIdAndStatus(UUID userId, BookingOrderStatus status, Pageable pageable) {
-        return bookingOrderJpaRepository.findByUserIdAndStatus(userId, status, pageable)
+        return bookingOrderJpaRepository.findByUserIdAndStatus(userId, status, PageableSanitizer.capped(pageable))
                 .map(bookingOrderEntityMapper::toDomain);
     }
 

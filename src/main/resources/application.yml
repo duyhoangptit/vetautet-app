@@ -110,7 +110,7 @@ spring:
 
 # Server Configuration
 server:
-  port: 8081
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /
   tomcat:
@@ -118,6 +118,7 @@ server:
       max: 100
       min-spare: 10
       max-queue-capacity: 10000
+  forward-headers-strategy: native
 
 # Logging Configuration
 logging:
@@ -182,6 +183,9 @@ app:
       notification-email-topic: ${APP_KAFKA_OUTBOX_NOTIFICATION_EMAIL_TOPIC:notification.email.requested.v1}
       send-timeout: ${APP_KAFKA_OUTBOX_SEND_TIMEOUT:10s}
   rate-limit:
+    # Master switch for the whole rate-limit module. Overridden to `false`
+    # in application-pentest.yml so pentest tooling isn't throttled/blocked.
+    enabled: ${APP_RATE_LIMIT_ENABLED:true}
     scopes:
       register:
         soft-limit-per-minute: 5

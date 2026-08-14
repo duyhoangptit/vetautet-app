@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vetautet.app.presentation.config.ratelimit.RateLimitProperties;
 import com.vetautet.app.presentation.rest.dto.response.BaseResponse;
 import com.vetautet.app.shared.common.exception.ErrorCode;
 
@@ -56,11 +57,21 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
+    private final RateLimitProperties properties;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         if (!PROTECTED_PATHS.contains(request.getRequestURI())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!properties.isEnabled()) {
+            // e.g. app.rate-limit.enabled=false under the pentest profile, so
+            // security testing tooling isn't throttled or IP-blocked.
+            log.debug("Rate-limit disabled (app.rate-limit.enabled=false), allowing request uri={}",
+                    request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }

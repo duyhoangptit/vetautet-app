@@ -30,11 +30,6 @@ public class IpRateLimiter {
     private final CaptchaVerifier captchaVerifier;
 
     public String resolveClientIp(HttpServletRequest request) {
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(forwardedFor)) {
-            return forwardedFor.split(",")[0].trim();
-        }
-
         return request.getRemoteAddr();
     }
 

@@ -36,6 +36,14 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        if (!properties.isEnabled()) {
+            // e.g. app.rate-limit.enabled=false under the pentest profile, so
+            // security testing tooling isn't throttled or IP-blocked.
+            log.debug("Rate-limit module disabled (app.rate-limit.enabled=false), allowing request uri={}",
+                    request.getRequestURI());
+            return true;
+        }
+
         String scopeKey = rateLimit.scope() == null ? handlerMethod.getMethod().getName() : rateLimit.scope();
         RateLimitProperties.RateLimitSpec spec = properties.getScopes().get(scopeKey);
         if (spec == null) {
