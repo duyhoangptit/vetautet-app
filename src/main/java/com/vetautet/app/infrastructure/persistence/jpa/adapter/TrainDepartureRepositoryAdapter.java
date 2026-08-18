@@ -42,8 +42,12 @@ public class TrainDepartureRepositoryAdapter implements TrainDepartureRepository
 
     @Override
     @Transactional(readOnly = true)
-    public List<TrainDeparture> findByBusinessDateAndStatus(LocalDate businessDate, TrainDepartureStatus status) {
-        return jpaRepository.findByBusinessDateAndStatus(businessDate, status).stream().map(mapper::toDomain).toList();
+    public List<TrainDeparture> findByBusinessDateAndStatusAndOriginStationIdAndDestinationStationId(
+            LocalDate businessDate, TrainDepartureStatus status, UUID originStationId, UUID destinationStationId) {
+        return jpaRepository
+                .findByBusinessDateAndStatusAndOriginStationIdAndDestinationStationId(
+                        businessDate, status, originStationId, destinationStationId)
+                .stream().map(mapper::toDomain).toList();
     }
 
     @Override

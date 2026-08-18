@@ -9,6 +9,7 @@ import com.vetautet.app.domain.inventory.repository.DepartureInventoryBucketRepo
 import com.vetautet.app.domain.ticketing.model.TrainDepartureStatus;
 import com.vetautet.app.domain.ticketing.repository.TrainDepartureRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -21,14 +22,22 @@ public class SearchDepartureUseCaseImpl implements SearchDepartureUseCase {
     private final TrainDepartureRepository trainDepartureRepository;
     private final DepartureInventoryBucketRepository departureInventoryBucketRepository;
 
+    // Public, unauthenticated endpoint (see SecurityConfig) - short TTL
+    // ("spring.cache.redis.caches.departure-search", currently 30s) because
+    // seat availability changes on every booking. This only smooths out
+    // repeated searches for the same route/date; it does not protect against
+    // an attacker varying params to defeat the cache - that's what
+    // @RateLimit(scope = "departureSearch") on DepartureController is for.
     @Override
+    @Cacheable(value = "departure-search",
+            key = "#query.originStationId + ':' + #query.destinationStationId + ':' + #query.businessDate")
     public List<DepartureAvailabilityDto> execute(SearchDepartureQuery query) {
         Instant currentTime = query.getCurrentTime() != null ? query.getCurrentTime() : Instant.now();
 
-        return trainDepartureRepository.findByBusinessDateAndStatus(query.getBusinessDate(), TrainDepartureStatus.OPN)
+        return trainDepartureRepository.findByBusinessDateAndStatusAndOriginStationIdAndDestinationStationId(
+                        query.getBusinessDate(), TrainDepartureStatus.OPN,
+                        query.getOriginStationId(), query.getDestinationStationId())
                 .stream()
-                .filter(departure -> departure.getOriginStationId().equals(query.getOriginStationId()))
-                .filter(departure -> departure.getDestinationStationId().equals(query.getDestinationStationId()))
                 .filter(departure -> !departure.getSaleOpensAt().isAfter(currentTime))
                 .filter(departure -> !departure.getSaleClosesAt().isBefore(currentTime))
                 .map(departure -> DepartureAvailabilityDto.builder()

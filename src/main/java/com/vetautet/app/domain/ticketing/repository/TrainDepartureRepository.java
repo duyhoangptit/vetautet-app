@@ -18,7 +18,8 @@ public interface TrainDepartureRepository {
 
     Optional<TrainDeparture> findByCode(String departureCode);
 
-    List<TrainDeparture> findByBusinessDateAndStatus(LocalDate businessDate, TrainDepartureStatus status);
+    List<TrainDeparture> findByBusinessDateAndStatusAndOriginStationIdAndDestinationStationId(
+            LocalDate businessDate, TrainDepartureStatus status, UUID originStationId, UUID destinationStationId);
 
     List<TrainDeparture> findUpcomingByRouteId(UUID routeId, Instant plannedDepartureAt);
 }

@@ -40,6 +40,11 @@ spring:
         user-session: 1800 # 30 minutes
         train-schedule: 14400 # 4h
         station: 86400 # 24h
+        # Short TTL: seat availability changes on every booking, so search
+        # results may be slightly stale. The actual booking flow always
+        # re-validates/locks inventory at write time, this cache only
+        # protects the public, unauthenticated search endpoint from load.
+        departure-search: 30 # 30 seconds
 
   # Database Configuration
   datasource:
@@ -210,6 +215,14 @@ app:
       availability:
         soft-limit-per-minute: 20
         hard-limit-per-hour: 200
+        challenge-ttl-minutes: 15
+        block-ttl-minutes: 60
+      departureSearch:
+        # Public, unauthenticated pre-booking search - higher volume than
+        # availability is expected from normal users, but still capped per
+        # IP so it can't be used to flood the DB connection pool.
+        soft-limit-per-minute: 30
+        hard-limit-per-hour: 300
         challenge-ttl-minutes: 15
         block-ttl-minutes: 60
   user-availability:

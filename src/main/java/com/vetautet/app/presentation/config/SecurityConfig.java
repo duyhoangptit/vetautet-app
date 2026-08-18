@@ -15,6 +15,7 @@ import com.vetautet.app.infrastructure.security.MultiPortalAuthorizationManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -68,6 +69,15 @@ public class SecurityConfig {
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/users/availability")
+                        .permitAll()
+
+                        // Public pre-booking search - users must be able to search
+                        // departures before logging in. Scoped to GET only so no other
+                        // verb on this path accidentally becomes public. Protected from
+                        // abuse by @RateLimit(scope = "departureSearch") on the
+                        // controller (see DepartureController) + short-TTL Redis cache
+                        // (see SearchDepartureUseCaseImpl), not by authentication.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/departures/search")
                         .permitAll()
 
                         // Swagger/OpenAPI documentation - public access

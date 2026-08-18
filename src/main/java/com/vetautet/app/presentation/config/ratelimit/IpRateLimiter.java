@@ -28,6 +28,7 @@ public class IpRateLimiter {
 
     private final RedissonClient redissonClient;
     private final CaptchaVerifier captchaVerifier;
+    private final LocalFallbackRateLimiter localFallbackRateLimiter;
 
     public String resolveClientIp(HttpServletRequest request) {
         return request.getRemoteAddr();
@@ -40,12 +41,17 @@ public class IpRateLimiter {
             return doCheck(scope, ip, captchaToken, softLimitPerMinute, hardLimitPerHour,
                     challengeTtlMinutes, blockTtlMinutes);
         } catch (RedisException ex) {
-            // Fail open: a Redis outage must not turn into a full outage of the
-            // protected endpoint. See RedisConfig's CustomCacheErrorHandler for the
-            // same fail-open philosophy applied to @Cacheable.
-            log.warn("Redis unavailable, allowing request without rate-limit: scope={} ip={} error={}",
+            // Unlike the Redis cache (see RedisConfig's CustomCacheErrorHandler,
+            // which fails open on a cache miss - acceptable since a cache is only
+            // a performance optimization), a rate limiter IS the security control
+            // for public/unauthenticated endpoints. Failing fully open here would
+            // mean the exact moment Redis goes down, every such endpoint loses its
+            // only protection at once. Degrade to a local, per-instance limiter
+            // instead - see LocalFallbackRateLimiter for the trade-off.
+            log.warn("Redis unavailable, falling back to local in-process rate limiting: scope={} ip={} error={}",
                     scope, ip, ex.getMessage());
-            return RateLimitDecision.allow();
+            return localFallbackRateLimiter.check(scope, ip, captchaToken, softLimitPerMinute, hardLimitPerHour,
+                    challengeTtlMinutes, blockTtlMinutes);
         }
     }
 

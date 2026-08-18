@@ -16,7 +16,8 @@ public interface TrainDepartureJpaRepository extends JpaRepository<TrainDepartur
 
     Optional<TrainDepartureJpaEntity> findByDepartureCode(String departureCode);
 
-    List<TrainDepartureJpaEntity> findByBusinessDateAndStatus(LocalDate businessDate, TrainDepartureStatus status);
+    List<TrainDepartureJpaEntity> findByBusinessDateAndStatusAndOriginStationIdAndDestinationStationId(
+            LocalDate businessDate, TrainDepartureStatus status, UUID originStationId, UUID destinationStationId);
 
     List<TrainDepartureJpaEntity> findByRouteIdAndPlannedDepartureAtAfter(UUID routeId, Instant plannedDepartureAt);
 }

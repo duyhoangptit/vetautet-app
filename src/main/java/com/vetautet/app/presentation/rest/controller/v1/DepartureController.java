@@ -3,6 +3,7 @@ package com.vetautet.app.presentation.rest.controller.v1;
 import com.vetautet.app.application.ticketing.dto.DepartureAvailabilityDto;
 import com.vetautet.app.application.ticketing.dto.SearchDepartureQuery;
 import com.vetautet.app.application.ticketing.port.input.SearchDepartureUseCase;
+import com.vetautet.app.presentation.config.ratelimit.RateLimit;
 import com.vetautet.app.presentation.rest.dto.response.BaseResponse;
 import com.vetautet.app.presentation.rest.dto.response.DepartureAvailabilityResponse;
 import com.vetautet.app.presentation.rest.mapper.BookingFlowPresentationMapper;
@@ -32,6 +33,7 @@ public class DepartureController {
     private final BookingFlowPresentationMapper mapper;
 
     @GetMapping("/search")
+    @RateLimit(scope = "departureSearch")
     @Operation(summary = "Search departures", description = "Search open departures by business date and origin/destination station")
     public ResponseEntity<BaseResponse<List<DepartureAvailabilityResponse>>> search(
             @Parameter(description = "Origin station ID") @RequestParam UUID originStationId,

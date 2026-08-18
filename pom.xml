@@ -125,6 +125,13 @@
             <version>${redisson.version}</version>
         </dependency>
 
+        <!-- In-process fallback rate limiting when Redis/Redisson is unreachable
+             (see LocalFallbackRateLimiter). Version managed by the Spring Boot BOM. -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
