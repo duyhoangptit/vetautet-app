@@ -17,7 +17,7 @@ scrape_configs:
   - job_name: "vetautet-app"
     metrics_path: "/actuator/prometheus"
     static_configs:
-      - targets: ["app:8081"]
+      - targets: ["vetautet-app:8080"]
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
@@ -26,7 +26,7 @@ scrape_configs:
   - job_name: "report-job"
     metrics_path: "/actuator/prometheus"
     static_configs:
-      - targets: ["report-job:8080"]
+      - targets: ["report-job-app:8080"]
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
