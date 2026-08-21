@@ -86,7 +86,9 @@ presentation/rest/dto/response/OrderKeysetPageResponse.java
 
 ## Data model
 
-Table `orders` (migration `017-create-orders-demo-table.sql`), 15 columns:
+Table `orders` (migration `017-create-orders-demo-table.sql`; RBAC grant for
+the read endpoint in a second migration, `018-orders-demo-rbac.sql` — see
+API section), 15 columns:
 
 | Column             | Type            | Notes                                   |
 |---------------------|-----------------|------------------------------------------|
@@ -162,9 +164,21 @@ properties files.
   hand-built `LIMIT`, not a Spring Data `Pageable`, so `PageableSanitizer`
   itself isn't applicable, but its `MAX_PAGE_SIZE` constant is reused per
   CLAUDE.md rule 2; no second hardcoded literal).
-- Protected by `@RequireBearerAuth` (read-only demo data, any authenticated
-  user — consistent with this being non-sensitive synthetic data, unlike the
-  user-enumeration concern called out in CLAUDE.md's open follow-ups).
+- Protected by `@RequireBearerAuth`. **Addendum (discovered during planning,
+  not in the original design pass):** every non-`permitAll` route in this
+  codebase also passes through `MultiPortalAuthorizationManager`, which
+  denies (403) unless the caller's role has an explicit RBAC grant in the
+  `endpoints` / `permissions` / `role_permissions` tables (seeded in
+  `014-rbac-master-data.sql`) — `@RequireBearerAuth` alone (`isAuthenticated()`)
+  is necessary but not sufficient, same caveat CLAUDE.md already flags for
+  `UserController`. This endpoint is registered **ADMIN-only**: a new
+  migration adds a `ordersdemo:orders:list` permission + the
+  `GET /api/v1/orders-demo` endpoint row + a `permission_endpoints` link.
+  No `role_permissions` row is needed for ADMIN specifically — that role's
+  seed already grants it every permission via `JOIN permissions permission
+  ON TRUE`. Deliberately not granted to the `USER` role: this lists raw
+  synthetic order data across the whole table with no ownership scoping,
+  so it stays an admin/dev tool, not a customer-facing listing.
 
 Response body (`OrderKeysetPageResponse`):
 ```json
