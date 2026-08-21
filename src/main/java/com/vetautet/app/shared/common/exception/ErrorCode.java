@@ -59,6 +59,8 @@ public enum ErrorCode {
 
     AUTH_FLOW_TOKEN_EXPIRED("ERR-3009"),
 
+    INVALID_ORDER_CURSOR("ERR-3010"),
+
 
 
     // Authentication/Authorization errors (4xxx)

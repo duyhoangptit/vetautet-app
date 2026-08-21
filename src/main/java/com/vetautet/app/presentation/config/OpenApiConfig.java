@@ -75,7 +75,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("v1-apis")
                 .displayName("API (V1)")
-                .pathsToMatch("/api/v1/**")
+                .pathsToMatch("/v1/**")
                 .addOpenApiCustomizer(xPortalHeaderCustomizer())
                 .build();
     }
@@ -86,7 +86,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("v2-apis")
                 .displayName("API (V2)")
-                .pathsToMatch("/api/v2/**")
+                .pathsToMatch("/v2/**")
                 .addOpenApiCustomizer(xPortalHeaderCustomizer())
                 .build();
     }
@@ -97,7 +97,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("internal-apis")
                 .displayName("API (Internal)")
-                .pathsToMatch("/api/internal/**")
+                .pathsToMatch("/internal/**")
                 .addOpenApiCustomizer(xPortalHeaderCustomizer())
                 .build();
     }

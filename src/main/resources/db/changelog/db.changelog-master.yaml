@@ -31,3 +31,7 @@ databaseChangeLog:
       file: db/changelog/changes/015-add-login-lockout-to-users.sql
   - include:
       file: db/changelog/changes/016-add-departure-search-index.sql
+  - include:
+      file: db/changelog/changes/017-create-orders-demo-table.sql
+  - include:
+      file: db/changelog/changes/018-orders-demo-rbac.sql

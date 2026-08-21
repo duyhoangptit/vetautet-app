@@ -80,6 +80,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/departures/search")
                         .permitAll()
 
+                        // Dev-only orders-demo seeder - the OrderSeedController bean only
+                        // exists under the dev/local profiles (@Profile), so this matcher
+                        // is unreachable in any other profile including production; safety
+                        // comes from profile exclusion, not from this permitAll.
+                        .requestMatchers("/internal/orders-demo/**")
+                        .permitAll()
+
                         // Swagger/OpenAPI documentation - public access
                         .requestMatchers(
                                 "/swagger-ui/**",
