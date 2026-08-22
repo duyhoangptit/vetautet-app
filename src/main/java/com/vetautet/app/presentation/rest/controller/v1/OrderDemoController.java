@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Orders Demo", description = "Keyset pagination demo over a simulated orders table")
-@RequireBearerAuth
-@SecurityRequirement(name = "bearer-jwt")
+//@RequireBearerAuth
+//@SecurityRequirement(name = "bearer-jwt")
 public class OrderDemoController {
 
     private final GetOrdersPageUseCase getOrdersPageUseCase;

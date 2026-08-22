@@ -77,7 +77,7 @@ public class SecurityConfig {
                         // abuse by @RateLimit(scope = "departureSearch") on the
                         // controller (see DepartureController) + short-TTL Redis cache
                         // (see SearchDepartureUseCaseImpl), not by authentication.
-                        .requestMatchers(HttpMethod.GET, "/api/v1/departures/search")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/departures/search", "/api/v1/orders-demo")
                         .permitAll()
 
                         // Dev-only orders-demo seeder - the OrderSeedController bean only

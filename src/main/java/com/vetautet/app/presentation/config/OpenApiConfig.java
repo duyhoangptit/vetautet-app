@@ -44,6 +44,11 @@ public class OpenApiConfig {
                                 .in(SecurityScheme.In.HEADER)     // Chỉ định vị trí nằm ở Header
                                 .name("x-captcha-token")          // Tên header thực tế sẽ gửi đi
                                 .description("Nhập Captcha token được sinh ra từ phía Front-end"))
+                        .addSecuritySchemes("X-Portal", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY) // Sửa từ HTTP thành APIKEY
+                                .in(SecurityScheme.In.HEADER)     // Chỉ định vị trí nằm ở Header
+                                .name("x-portal")          // Tên header thực tế sẽ gửi đi
+                                .description("Nhập Portal muốn truy cập"))
                 )
                 /*
                 .addSecurityItem(new SecurityRequirement().addList("bearer-jwt"))*/;
@@ -75,7 +80,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("v1-apis")
                 .displayName("API (V1)")
-                .pathsToMatch("/v1/**")
+                .pathsToMatch("/api/v1/**")
                 .addOpenApiCustomizer(xPortalHeaderCustomizer())
                 .build();
     }
@@ -86,7 +91,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("v2-apis")
                 .displayName("API (V2)")
-                .pathsToMatch("/v2/**")
+                .pathsToMatch("/apiv2/**")
                 .addOpenApiCustomizer(xPortalHeaderCustomizer())
                 .build();
     }

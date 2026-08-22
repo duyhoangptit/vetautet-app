@@ -1,1 +1,0 @@
-![telegram-cloud-photo-size-5-6316815020678910403-y.jpg](../../../../../../../../Library/Group%20Containers/6N38VWS5BX.ru.keepcoder.Telegram/appstore/account-124555105265961193/postbox/media/telegram-cloud-photo-size-5-6316815020678910403-y.jpg)
