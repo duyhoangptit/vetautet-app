@@ -556,6 +556,22 @@ git add -A
 git commit -q -m "feat: port auth/user/rbac Liquibase schema and seed data"
 ```
 
+**Amendment (discovered during Task 13's live boot test, added post-execution):**
+this task's original 7-file changelog selection above missed two of
+vetautet's changelogs that later tasks' Java code actually depends on:
+`002-add-password-hash.sql` (adds `users.password_hash`, which
+`UserJpaEntity` — Task 7 — expects) and `003-create-idempotency-records.sql`
+(creates `idempotency_records`, which `IdempotencyRecordJpaEntity`/
+`IdempotencyAspect` — Tasks 7/9 — expect). Both were added as new,
+additive changesets (`008-add-password-hash.sql`,
+`009-create-idempotency-records.sql`, appended to the master changelog) once
+found, rather than folded into the original numbering, since renumbering
+would have meant re-keying already-applied changesets. If executing this
+plan fresh (not resuming a partially-done run), fold these two directly
+into the original Step 1 file list instead of adding them as an afterthought
+— see the SDD ledger's "Real bug found post-review" entry for the exact SQL
+content and the reasoning for why appending (not reordering) was safe here.
+
 ---
 
 ### Task 4: Domain layer — auth, user, RBAC models
