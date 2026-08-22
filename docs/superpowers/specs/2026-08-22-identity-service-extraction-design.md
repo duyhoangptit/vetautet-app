@@ -33,7 +33,8 @@ refactor from.
 ## New project
 
 - **Location:** `/Users/tigerpro/Documents/AI/vmware-ai/vetautet-app/identity-service`
-  (sibling of `vetautet`), own git repository.
+  (sibling of `vetautet`), own git repository, remote
+  `https://github.com/duyhoangptit/identity-service.git`.
 - **Root package:** `com.platform.identity` (not `com.vetautet.*` — this service
   is shared across products, so the package must not be brand-scoped).
 - **Maven:** `groupId=com.platform`, `artifactId=identity-service`, parent
