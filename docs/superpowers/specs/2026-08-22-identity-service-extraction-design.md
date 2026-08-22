@@ -93,6 +93,16 @@ doesn't.
 **Not copied** (stays in `vetautet`, unrelated domain): booking, payment,
 ticketing, notification, messaging, ordersdemo, and anything referencing them.
 
+**Exception — `AuthNotificationSender`:** the port used by
+`AuthFlowLinkService`/`OtpService` to send OTP codes and activation/reset
+links. In `vetautet`, `LoggingAuthNotificationSender` is misleadingly named —
+despite the class name it delegates to the full `notification` module
+(outbox table → Kafka → an out-of-repo consumer that sends real email), which
+is explicitly not copied. identity-service gets a genuinely log-only
+implementation instead: logs the OTP code / link at `INFO` and returns,
+no outbox, no Kafka. Wiring identity-service into a real email-sending
+pipeline is a follow-up (see "Out of scope").
+
 ## API surface
 
 **Public (`/api/v1/**`)** — same paths/contracts as `vetautet` today: `auth/login`,
@@ -157,6 +167,9 @@ imports.
 - Wiring `vetautet`'s `JwtDecoder` to identity-service's JWKS endpoint instead
   of its own local `RsaKeyPairRepository`.
 - Real data migration, event-driven sync, mTLS/service mesh.
+- Wiring identity-service's OTP/activation-link/reset-password emails to an
+  actual outbox+Kafka pipeline (or any other real email transport) — this
+  extraction ships with a log-only `AuthNotificationSender`.
 
 Each of the above needs its own design pass once identity-service is running
 and verified — they touch a live system (`vetautet`) and deserve the same
