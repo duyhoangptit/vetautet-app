@@ -396,7 +396,7 @@ Service listens on `http://localhost:8081`. Swagger UI at `/swagger-ui.html`.
 
 - [ ] **Step 7: Verify it compiles**
 
-Run: `cd "$DST" && mvn -q -DskipTests compile`
+Run: `cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile`
 Expected: `BUILD SUCCESS` (a single class, no other source yet).
 
 - [ ] **Step 8: Commit**
@@ -488,7 +488,7 @@ git commit -q -m "chore: add local docker-compose infra (postgres, redis)"
 
 **Files:**
 - Create: `$DST/src/main/resources/db/changelog/db.changelog-master.yaml`
-- Create: `$DST/src/main/resources/db/changelog/changes/001-initial-schema-postgresql.sql` (users + member_info portion only)
+- Create: `$DST/src/main/resources/db/changelog/changes/001-initial-schema-postgresql.sql` (users table only — `member_info` is explicitly excluded, see below)
 - Create: `$DST/src/main/resources/db/changelog/changes/002-align-user-and-rsa-schema.sql`
 - Create: `$DST/src/main/resources/db/changelog/changes/003-create-auth-flow-and-otp-tables.sql`
 - Create: `$DST/src/main/resources/db/changelog/changes/004-inital-schema-for-rbac.sql`
@@ -516,7 +516,7 @@ cp "$SRC/src/main/resources/db/changelog/changes/015-add-login-lockout-to-users.
    "$DST/src/main/resources/db/changelog/changes/007-add-login-lockout-to-users.sql"
 ```
 
-- [ ] **Step 2: Open `001-initial-schema-postgresql.sql` and remove everything except the `users` and `member_info` table definitions** (and the `fk_member_info_user` FK, which stays — both tables live in identity-service's own DB). Drop any table/FK referencing `booking_orders` or other out-of-scope domains from this file — check its full content first (`cat` it) since it was `vetautet`'s all-in-one initial schema; keep only what `users`/`member_info` need to exist and be valid Postgres DDL on their own.
+- [ ] **Step 2: Open `001-initial-schema-postgresql.sql` and remove everything except the `users` table definition.** `member_info` is explicitly **excluded** — it holds business-specific membership data (policy number, member company, member number, dependent number) that belongs to a future, separate customer-service domain, not to a platform-wide identity service — so drop the `member_info` table, the `fk_member_info_user` FK, and any other table/FK referencing `booking_orders` or other out-of-scope domains. Check the file's full content first (`cat` it) since it was `vetautet`'s all-in-one initial schema; keep only what the `users` table needs to exist and be valid, standalone Postgres DDL on its own.
 
 - [ ] **Step 3: Write the master changelog**
 
@@ -585,7 +585,7 @@ find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/c
 
 - [ ] **Step 3: Compile**
 
-Run: `cd "$DST" && mvn -q -DskipTests compile`
+Run: `cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile`
 Expected: `BUILD SUCCESS`.
 
 - [ ] **Step 4: Commit**
@@ -694,7 +694,7 @@ public enum ErrorCode {
 
 ```bash
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 ```
 
 Expected: `BUILD SUCCESS`.
@@ -732,12 +732,19 @@ cp -R "$SRC/src/main/java/com/vetautet/app/application/user" "$DST/src/main/java
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
 ```
 
-- [ ] **Step 3: Compile**
+- [ ] **Step 3: Strip the `member_info`-related fields — out of scope (see spec's "Excluded — `member_info`").** `member_info` is business-specific membership data belonging to a future, separate customer-service domain, not identity-service. Remove `memberPolicyNumber`, `memberCompanyId`, `memberNumber`, `dependentNumber` from:
+  - `$DST/src/main/java/com/platform/identity/application/user/dto/CreateUserCommand.java`
+  - `$DST/src/main/java/com/platform/identity/application/user/dto/UpdateUserCommand.java`
+  - `$DST/src/main/java/com/platform/identity/application/user/dto/UserDto.java`
 
-Run: `cd "$DST" && mvn -q -DskipTests compile`
+  And remove the corresponding `.memberPolicyNumber(...)`/`.memberCompanyId(...)`/`.memberNumber(...)`/`.dependentNumber(...)` builder calls in `$DST/src/main/java/com/platform/identity/application/user/mapper/UserApplicationMapper.java`. This is a safe removal with no further blast radius: in `vetautet`, none of these four fields ever reach `UserJpaEntity` or the domain `User` model — `UserEntityMapper` never reads them — so nothing downstream (Task 7's persistence layer) needs any corresponding change.
+
+- [ ] **Step 4: Compile**
+
+Run: `cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile`
 Expected: **fails** with "package com.platform.identity.infrastructure... does not exist" is NOT expected (application layer only depends on domain + shared, both already present) — expect `BUILD SUCCESS`. If it fails on a missing symbol, it means some application-layer class reaches into infrastructure/presentation directly (a layering violation) or references an out-of-scope domain (booking/notification/messaging) — resolve by checking what the missing import actually is via `grep -rn "import com.vetautet.app" "$SRC/src/main/java/com/vetautet/app/application/auth" "$SRC/src/main/java/com/vetautet/app/application/user"` before this copy and confirming every import target was already copied in Task 4/5.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -804,7 +811,7 @@ done
 
 ```bash
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 ```
 
 Expected: `BUILD SUCCESS`. If a `PermissionJpaEntity`/`PortalJpaEntity` reference is missing an adapter/repository (they may only be referenced from within `RoleJpaEntity`/`EndpointJpaEntity` as JPA relationships, not through their own top-level repository), that's expected — leave them as entities only unless the compiler says otherwise.
@@ -847,7 +854,7 @@ done
 
 ```bash
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 ```
 
 Expected: `BUILD SUCCESS`.
@@ -915,7 +922,7 @@ done
 
 ```bash
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 ```
 
 Expected: `BUILD SUCCESS`.
@@ -976,7 +983,7 @@ public class LoggingAuthNotificationSender implements AuthNotificationSender {
 
 - [ ] **Step 2: Compile**
 
-Run: `cd "$DST" && mvn -q -DskipTests compile`
+Run: `cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile`
 Expected: `BUILD SUCCESS`.
 
 - [ ] **Step 3: Commit**
@@ -1032,7 +1039,7 @@ done
 
 ```bash
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 ```
 
 Expected: `BUILD SUCCESS`.
@@ -1086,16 +1093,23 @@ for f in AuthPresentationMapper UserPresentationMapper; do
 done
 ```
 
-- [ ] **Step 2: Rename packages and compile**
+- [ ] **Step 2: Strip the `member_info`-related fields — out of scope (see spec's "Excluded — `member_info`").** Same exclusion as Task 6. Remove `memberPolicyNumber`, `memberCompanyId`, `memberNumber`, `dependentNumber` (and their `@Size` validation annotations) from:
+  - `$DST/src/main/java/com/platform/identity/presentation/rest/dto/request/CreateUserRequest.java`
+  - `$DST/src/main/java/com/platform/identity/presentation/rest/dto/request/UpdateUserRequest.java`
+  - `$DST/src/main/java/com/platform/identity/presentation/rest/dto/response/UserResponse.java`
+
+  And remove the corresponding `.memberPolicyNumber(...)`/`.memberCompanyId(...)`/`.memberNumber(...)`/`.dependentNumber(...)` calls from every builder call in `$DST/src/main/java/com/platform/identity/presentation/rest/mapper/UserPresentationMapper.java` (`toCommand(CreateUserRequest)`, `toCommand(String, UpdateUserRequest)`, and `toResponse(UserDto)` all reference these fields today — check each one).
+
+- [ ] **Step 3: Rename packages and compile**
 
 ```bash
 find "$DST/src/main/java" -name '*.java' -exec sed -i '' 's/com\.vetautet\.app/com.platform.identity/g' {} +
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 ```
 
 Expected: `BUILD SUCCESS` — this is the first point the whole application compiles.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1438,7 +1452,7 @@ Add `"/.well-known/jwks.json"` to the existing `permitAll()` matcher list alongs
 - [ ] **Step 6: Compile and manually verify**
 
 ```bash
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 mvn -q spring-boot:run &
 sleep 20
 curl -sf http://localhost:8081/.well-known/jwks.json
@@ -1635,7 +1649,7 @@ Register `InternalApiKeyFilter` as a servlet filter before Spring Security's aut
 - [ ] **Step 6: Compile and verify**
 
 ```bash
-cd "$DST" && mvn -q -DskipTests compile
+cd "$DST" && mvn -q -DskipTests -Dliquibase.skip=true compile
 mvn -q spring-boot:run &
 sleep 20
 curl -sf -H "X-Internal-Api-Key: local-dev-internal-key-change-me" \

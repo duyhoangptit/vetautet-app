@@ -79,6 +79,27 @@ doesn't.
 - User: CRUD, profile, `UserController`, `UserAvailabilityController` +
   Redis/Redisson bloom filters (`UserBloomFilterConfig`,
   `UserBloomFilterSyncService`).
+
+**Excluded — `member_info` and its fields:** `member_info` is a separate
+table in `vetautet` (FK'd to `users`) holding business-specific membership
+data (policy number, member company, member number, dependent number) that
+belongs to a future, separate customer-service domain — not to a
+platform-wide identity service. Not copied:
+- The `member_info` table and its `fk_member_info_user` FK (dropped from the
+  trimmed `001-initial-schema-postgresql.sql`, alongside everything else
+  already excluded from that file).
+- `memberPolicyNumber`/`memberCompanyId`/`memberNumber`/`dependentNumber` on
+  `CreateUserCommand`, `UpdateUserCommand`, `UserDto` (application layer) and
+  `CreateUserRequest`, `UpdateUserRequest` (presentation layer), and their
+  corresponding mapper logic in `UserApplicationMapper` /
+  `UserPresentationMapper`.
+
+Confirmed safe to drop with no other blast radius: in `vetautet`, these four
+fields already don't reach `UserJpaEntity` or the domain `User` model — they
+flow only Request → Command → (silently dropped by the mapper before
+persistence), so `member_info` was already effectively disconnected from the
+persisted `User` aggregate. identity-service simply never introduces the
+fields in the first place.
 - RBAC: `Role`, `Endpoint`, `Portal`, `Permission` domain models, JPA
   entities/adapters, `MultiPortalAuthorizationManager` (kept — it protects
   identity-service's own endpoints, the same way it protects `vetautet`'s
